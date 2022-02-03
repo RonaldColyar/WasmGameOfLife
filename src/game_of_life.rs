@@ -21,6 +21,24 @@ project template, but this is an original
 implementation.
 */
 
+#[wasm_bindgen]
+extern "C" {
+    // Use `js_namespace` here to bind `console.log(..)` instead of just
+    // `log(..)`
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+
+    // The `console.log` is quite polymorphic, so we can bind it with multiple
+    // signatures. Note that we need to use `js_name` to ensure we always call
+    // `log` in JS.
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_u32(a: u32);
+
+    // Multiple arguments too!
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_many(a: &str, b: &str);
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct CellsJson {
     pub cells: Vec<Vec<u8>>,
@@ -43,6 +61,7 @@ pub struct UniverseImpl {
     pub complete: bool,
 }
 
+#[wasm_bindgen]
 impl UniverseImpl {
     pub fn new(cells: String) -> Self {
         Self {
@@ -69,9 +88,10 @@ impl UniverseImpl {
             //ensure there is another row
             if (0..self.cells_json.cells.len()).contains(&(self.row_index + 1)) {
                 self.col_index = 0;
-                self.row_index = 1;
+                self.row_index += 1;
             } else {
                 self.complete = true;
+                log("completed");
                 return;
             }
             return;
@@ -123,15 +143,18 @@ impl UniverseImpl {
 
     pub fn render(&self) -> String {
         let mut starting_string: String = String::from("");
+        log("rendering");
         for row in &self.cells_json.cells {
+            
             for column in row {
+                log(&column.to_string());
                 if column == &(2 as u8) || column == &(1 as u8) {
                     starting_string.push_str("◼");
                 } else {
                     starting_string.push_str("◻");
                 }
             }
-            starting_string.push_str("/n");
+            starting_string.push_str("\n");
         }
         return starting_string;
     }
